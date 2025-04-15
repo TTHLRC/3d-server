@@ -1,3 +1,4 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -18,11 +19,20 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+
+# Environment variables
 .env
 .venv
 venv/
 ENV/
+
+# IDE
 .idea/
 .vscode/
 *.swp
+*.swo
+
+# Logs
+*.log
+
 .DS_Store 
