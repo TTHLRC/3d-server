@@ -8,10 +8,11 @@ load_dotenv()
 
 # 数据库配置
 DB_CONFIG = {
-    'host': os.getenv('DB_HOST', 'localhost'),
-    'user': os.getenv('DB_USER', 'root'),
-    'password': os.getenv('DB_PASSWORD', 'root'),
-    'database': os.getenv('DB_NAME', '3d')
+    'host': os.getenv('MYSQL_HOST', 'localhost'),
+    'user': os.getenv('MYSQL_USER', 'root'),
+    'password': os.getenv('MYSQL_PASSWORD', 'root'),
+    'database': os.getenv('MYSQL_DATABASE', 'railway'),
+    'port': int(os.getenv('MYSQL_PORT', '3306'))
 }
 
 def get_db_connection():
