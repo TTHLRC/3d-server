@@ -56,9 +56,15 @@ def init_db():
     try:
         cursor = connection.cursor()
         
+        # 删除现有的表（注意顺序，因为有外键约束）
+        print("Dropping existing tables...")
+        cursor.execute("DROP TABLE IF EXISTS user_data")
+        cursor.execute("DROP TABLE IF EXISTS users")
+        
         # 创建用户表
+        print("Creating users table...")
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
+            CREATE TABLE users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(50) UNIQUE NOT NULL,
                 email VARCHAR(100) UNIQUE NOT NULL,
@@ -69,8 +75,9 @@ def init_db():
         """)
         
         # 创建用户数据表
+        print("Creating user_data table...")
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS user_data (
+            CREATE TABLE user_data (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 user_id INT NOT NULL,
                 cube_data JSON,
@@ -85,6 +92,7 @@ def init_db():
         
     except Error as e:
         print(f"Error creating tables: {e}")
+        raise e
     finally:
         if connection.is_connected():
             cursor.close()
