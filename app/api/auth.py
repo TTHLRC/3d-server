@@ -6,17 +6,22 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import mysql.connector
 from mysql.connector import Error
+import os
+from dotenv import load_dotenv
 
 from app.database.database import get_db_connection
 from app.schemas import schemas
 
+# 加载环境变量
+load_dotenv()
+
 # 配置信息
-SECRET_KEY = "your-secret-key-here"  # 在生产环境中应该使用环境变量
+SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key-here")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 30 #token的有效期
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
