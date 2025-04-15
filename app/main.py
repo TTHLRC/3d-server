@@ -128,8 +128,8 @@ def save_cube_data(
         else:
             # 创建新数据
             cursor.execute(
-                "INSERT INTO user_data (cube_data, user_id) VALUES (%s, %s)",
-                (json_data, current_user['id'])
+                "INSERT INTO user_data (user_id, cube_data) VALUES (%s, %s)",
+                (current_user['id'], json_data)
             )
         
         connection.commit()
@@ -154,7 +154,7 @@ def get_cube_data(current_user: dict = Depends(auth.get_current_user)):
         cursor.execute("SELECT cube_data FROM user_data WHERE user_id = %s", (current_user['id'],))
         user_data = cursor.fetchone()
         
-        if not user_data:
+        if not user_data or not user_data['cube_data']:
             # 如果用户没有数据，返回空的初始结构
             return schemas.CubeData(cubes=[], selectedCubes=[], hingePoints=[])
         
