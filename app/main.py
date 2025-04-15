@@ -5,12 +5,24 @@ from typing import List
 import mysql.connector
 from mysql.connector import Error
 import json
+import os
+from dotenv import load_dotenv
 
-from app.database.database import get_db_connection
+from app.database.database import get_db_connection, init_db
 from app.api import auth
 from app.schemas import schemas
 
+# 加载环境变量
+load_dotenv()
+
 app = FastAPI()
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup"""
+    print("Initializing database...")
+    init_db()
+    print("Database initialization completed")
 
 # 注册接口
 @app.post("/register")
