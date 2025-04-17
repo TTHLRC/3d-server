@@ -16,13 +16,7 @@ from app.schemas import schemas
 load_dotenv()
 
 app = FastAPI()
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["https://magicubess.vercel.app"],  # ✅ 改成你的 Vercel 网站地址
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
 
 @app.on_event("startup")
 async def startup_event():
