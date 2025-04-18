@@ -11,6 +11,7 @@ from dotenv import load_dotenv
 from app.database.database import get_db_connection, init_db
 from app.api import auth
 from app.schemas import schemas
+from fastapi.middleware.cors import CORSMiddleware
 
 # 加载环境变量
 load_dotenv()
