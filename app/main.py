@@ -166,7 +166,7 @@ def get_cube_data(current_user: dict = Depends(auth.get_current_user)):
         
         if not user_data or not user_data['cube_data']:
             # 如果用户没有数据，返回空的初始结构
-            return schemas.CubeData(cubes=[], selectedCubes=[], hingePoints=[])
+            return schemas.CubeData()
         
         # 解析JSON数据
         cube_data = json.loads(user_data['cube_data'])

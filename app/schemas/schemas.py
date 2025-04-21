@@ -13,9 +13,9 @@ class Cube(BaseModel):
     isFix: bool = False
 
 class CubeData(BaseModel):
-    cubes: List[Cube]
-    selectedCubes: List[str]
-    hingePoints: Dict
+    cubes: List[Cube] = []
+    selectedCubes: List[str] = []
+    hingePoints: Dict = {}
 
 class UserBase(BaseModel):
     username: str
