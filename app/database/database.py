@@ -1,5 +1,5 @@
 import mysql.connector
-from mysql.connector import Error
+from mysql.connector import Error, pooling
 import os
 from dotenv import load_dotenv
 
@@ -12,14 +12,41 @@ DB_CONFIG = {
     'user': os.getenv('MYSQL_USER', 'root'),
     'password': os.getenv('MYSQL_PASSWORD', 'root'),
     'database': os.getenv('MYSQL_DATABASE', 'railway'),
-    'port': int(os.getenv('MYSQL_PORT', '3306'))
+    'port': int(os.getenv('MYSQL_PORT', '3306')),
+    'pool_name': 'mypool',
+    'pool_size': 5,
+    'connect_timeout': 180,  # 连接超时时间
+    'autocommit': True,
+    'pool_reset_session': True
 }
+
+# 创建连接池
+try:
+    connection_pool = mysql.connector.pooling.MySQLConnectionPool(**DB_CONFIG)
+    print("Connection pool created successfully")
+except Error as e:
+    print(f"Error creating connection pool: {e}")
+    connection_pool = None
 
 def get_db_connection():
     try:
-        connection = mysql.connector.connect(**DB_CONFIG)
-        print("Database connected successfully")
-        return connection
+        if connection_pool:
+            connection = connection_pool.get_connection()
+            if not connection.is_connected():
+                connection.reconnect()
+            return connection
+        else:
+            # 如果连接池不可用，创建新连接
+            connection = mysql.connector.connect(
+                host=DB_CONFIG['host'],
+                user=DB_CONFIG['user'],
+                password=DB_CONFIG['password'],
+                database=DB_CONFIG['database'],
+                port=DB_CONFIG['port'],
+                connect_timeout=DB_CONFIG['connect_timeout']
+            )
+            print("Database connected successfully")
+            return connection
     except Error as e:
         print(f"Error connecting to MySQL Database: {e}")
         return None
