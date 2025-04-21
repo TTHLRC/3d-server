@@ -122,59 +122,65 @@ def save_cube_data(
         print(f"Error serializing data: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Invalid data format: {str(e)}")
 
-    with get_db_connection() as connection:
-        if not connection:
-            raise HTTPException(status_code=500, detail="Database connection failed")
+    connection = get_db_connection()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+    
+    try:
+        cursor = connection.cursor(dictionary=True)
         
-        try:
-            cursor = connection.cursor(dictionary=True)
-            
-            # 检查用户是否已有数据
-            cursor.execute("SELECT id FROM user_data WHERE user_id = %s", (current_user['id'],))
-            existing_data = cursor.fetchone()
-            
-            if existing_data:
-                # 更新现有数据
-                cursor.execute(
-                    "UPDATE user_data SET cube_data = %s WHERE user_id = %s",
-                    (json_data, current_user['id'])
-                )
-            else:
-                # 创建新数据
-                cursor.execute(
-                    "INSERT INTO user_data (user_id, cube_data) VALUES (%s, %s)",
-                    (current_user['id'], json_data)
-                )
-            
-            connection.commit()
+        # 检查用户是否已有数据
+        cursor.execute("SELECT id FROM user_data WHERE user_id = %s", (current_user['id'],))
+        existing_data = cursor.fetchone()
+        
+        if existing_data:
+            # 更新现有数据
+            cursor.execute(
+                "UPDATE user_data SET cube_data = %s WHERE user_id = %s",
+                (json_data, current_user['id'])
+            )
+        else:
+            # 创建新数据
+            cursor.execute(
+                "INSERT INTO user_data (user_id, cube_data) VALUES (%s, %s)",
+                (current_user['id'], json_data)
+            )
+        
+        connection.commit()
+        return {"status": "success", "message": "Cube data saved successfully"}
+        
+    except Error as e:
+        print(f"Database error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        if connection.is_connected():
             cursor.close()
-            return {"status": "success", "message": "Cube data saved successfully"}
-            
-        except Error as e:
-            print(f"Database error: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+            connection.close()
 
 # 获取数据接口
 @app.get("/getCubeData", response_model=schemas.CubeData)
 def get_cube_data(current_user: dict = Depends(auth.get_current_user)):
-    with get_db_connection() as connection:
-        if not connection:
-            raise HTTPException(status_code=500, detail="Database connection failed")
+    connection = get_db_connection()
+    if not connection:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+    
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("SELECT cube_data FROM user_data WHERE user_id = %s", (current_user['id'],))
+        user_data = cursor.fetchone()
         
-        try:
-            cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT cube_data FROM user_data WHERE user_id = %s", (current_user['id'],))
-            user_data = cursor.fetchone()
-            
-            if not user_data or not user_data['cube_data']:
-                # 如果用户没有数据，返回空的初始结构
-                return schemas.CubeData()
-            
-            # 解析JSON数据
-            cube_data = json.loads(user_data['cube_data'])
+        if not user_data or not user_data['cube_data']:
+            # 如果用户没有数据，返回空的初始结构
+            return schemas.CubeData()
+        
+        # 解析JSON数据
+        cube_data = json.loads(user_data['cube_data'])
+        return schemas.CubeData(**cube_data)
+        
+    except Error as e:
+        print(f"Database error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    finally:
+        if connection.is_connected():
             cursor.close()
-            return schemas.CubeData(**cube_data)
-            
-        except Error as e:
-            print(f"Database error: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}") 
+            connection.close() 
