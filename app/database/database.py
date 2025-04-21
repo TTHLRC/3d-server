@@ -2,6 +2,7 @@ import mysql.connector
 from mysql.connector import Error, pooling
 import os
 from dotenv import load_dotenv
+from contextlib import contextmanager
 
 # 加载环境变量
 load_dotenv()
@@ -14,10 +15,12 @@ DB_CONFIG = {
     'database': os.getenv('MYSQL_DATABASE', 'railway'),
     'port': int(os.getenv('MYSQL_PORT', '3306')),
     'pool_name': 'mypool',
-    'pool_size': 5,
-    'connect_timeout': 180,  # 连接超时时间
+    'pool_size': 20,  # 增加连接池大小
+    'pool_reset_session': True,
+    'connect_timeout': 180,
     'autocommit': True,
-    'pool_reset_session': True
+    'max_allowed_packet': 67108864,  # 64MB
+    'consume_timeout': 180,  # 连接获取超时时间
 }
 
 # 创建连接池
@@ -28,13 +31,16 @@ except Error as e:
     print(f"Error creating connection pool: {e}")
     connection_pool = None
 
+@contextmanager
 def get_db_connection():
+    """使用上下文管理器来确保连接正确关闭"""
+    connection = None
     try:
         if connection_pool:
             connection = connection_pool.get_connection()
             if not connection.is_connected():
                 connection.reconnect()
-            return connection
+            yield connection
         else:
             # 如果连接池不可用，创建新连接
             connection = mysql.connector.connect(
@@ -45,11 +51,18 @@ def get_db_connection():
                 port=DB_CONFIG['port'],
                 connect_timeout=DB_CONFIG['connect_timeout']
             )
-            print("Database connected successfully")
-            return connection
+            yield connection
     except Error as e:
         print(f"Error connecting to MySQL Database: {e}")
-        return None
+        yield None
+    finally:
+        if connection:
+            try:
+                if connection.is_connected():
+                    connection.close()
+                    print("Database connection closed successfully")
+            except Error as e:
+                print(f"Error closing connection: {e}")
 
 def check_tables_exist():
     """检查必要的表是否存在"""
