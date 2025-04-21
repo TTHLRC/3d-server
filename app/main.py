@@ -126,29 +126,39 @@ def save_cube_data(
         cursor.execute("SELECT id FROM user_data WHERE user_id = %s", (current_user['id'],))
         existing_data = cursor.fetchone()
         
-        # 将数据转换为JSON字符串
-        json_data = json.dumps(data.dict())
+        try:
+            # 将数据转换为JSON字符串
+            json_data = json.dumps(data.dict())
+        except Exception as e:
+            print(f"Error serializing data: {str(e)}")
+            raise HTTPException(status_code=400, detail=f"Invalid data format: {str(e)}")
         
-        if existing_data:
-            # 更新现有数据
-            cursor.execute(
-                "UPDATE user_data SET cube_data = %s WHERE user_id = %s",
-                (json_data, current_user['id'])
-            )
-        else:
-            # 创建新数据
-            cursor.execute(
-                "INSERT INTO user_data (user_id, cube_data) VALUES (%s, %s)",
-                (current_user['id'], json_data)
-            )
-        
-        connection.commit()
+        try:
+            if existing_data:
+                # 更新现有数据
+                cursor.execute(
+                    "UPDATE user_data SET cube_data = %s WHERE user_id = %s",
+                    (json_data, current_user['id'])
+                )
+            else:
+                # 创建新数据
+                cursor.execute(
+                    "INSERT INTO user_data (user_id, cube_data) VALUES (%s, %s)",
+                    (current_user['id'], json_data)
+                )
+            
+            connection.commit()
+        except Error as e:
+            print(f"Database error: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+            
         return {"status": "success", "message": "Cube data saved successfully"}
         
-    except Error as e:
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        if connection.is_connected():
+        if connection and connection.is_connected():
             cursor.close()
             connection.close()
 
