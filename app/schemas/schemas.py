@@ -10,11 +10,12 @@ class Position(BaseModel):
 class Cube(BaseModel):
     position: Position
     uuid: str
+    isFix: bool = False
 
 class CubeData(BaseModel):
     cubes: List[Cube]
     selectedCubes: List[str]
-    hingePoints: List[Dict]
+    hingePoints: Dict
 
 class UserBase(BaseModel):
     username: str
